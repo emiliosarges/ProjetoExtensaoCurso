@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qualidade do Ar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+</head>
+<body>
+    <h1>Monitoramento da Qualidade do Ar</h1>
+    <div id="map"></div>
+    <p id="air-quality">Carregando...</p>
+    
+    <div id="legend">
+        <h2>O que significam PM10 e PM2.5?</h2>
+        <p><strong>PM10:</strong> Partículas inaláveis com diâmetro de até 10 micrômetros (µm), incluindo poeira, pólen e fumaça. Podem causar irritação respiratória.</p>
+        <p><strong>PM2.5:</strong> Partículas finas com diâmetro de até 2.5 micrômetros (µm). Podem penetrar nos pulmões e entrar na corrente sanguínea, aumentando riscos de doenças respiratórias e cardíacas.</p>
+        <h3>Classificação da Qualidade do Ar (PM2.5)</h3>
+        <ul>
+            <li><strong>0-12 µg/m³:</strong> Excelente</li>
+            <li><strong>13-35 µg/m³:</strong> Bom</li>
+            <li><strong>36-55 µg/m³:</strong> Moderado</li>
+            <li><strong>56-150 µg/m³:</strong> Ruim</li>
+            <li><strong>150+ µg/m³:</strong> Muito Ruim</li>
+        </ul>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const map = L.map('map').setView([0, 0], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    map.setView([latitude, longitude], 13);
+                    L.marker([latitude, longitude]).addTo(map)
+                        .bindPopup("Você está aqui").openPopup();
+
+                    fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&hourly=pm10,pm2_5`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.hourly && data.hourly.pm10 && data.hourly.pm2_5) {
+                                const pm10 = data.hourly.pm10[0];
+                                const pm2_5 = data.hourly.pm2_5[0];
+                                let qualityText = "Indisponível";
+
+                                if (pm2_5 <= 12) qualityText = "Excelente";
+                                else if (pm2_5 <= 35) qualityText = "Bom";
+                                else if (pm2_5 <= 55) qualityText = "Moderado";
+                                else if (pm2_5 <= 150) qualityText = "Ruim";
+                                else qualityText = "Muito Ruim";
+
+                                document.getElementById("air-quality").textContent = `Qualidade do ar: ${qualityText} (PM10: ${pm10}, PM2.5: ${pm2_5})`;
+                            } else {
+                                document.getElementById("air-quality").textContent = "Erro ao obter a qualidade do ar.";
+                            }
+                        })
+                        .catch(error => {
+                            document.getElementById("air-quality").textContent = "Erro ao obter os dados.";
+                        });
+                }, () => {
+                    document.getElementById("air-quality").textContent = "Geolocalização não permitida.";
+                });
+            } else {
+                document.getElementById("air-quality").textContent = "Geolocalização não suportada pelo navegador.";
+            }
+        });
+    </script>
+</body>
+</html>
