@@ -64,3 +64,23 @@ ul {
     margin-bottom: 10px;
 }
 
+#rodape {
+    text-align: center;
+    background-color: #FF6500 ;
+    padding: 4px;
+    color: white;
+}
+
+#rodape a {
+    text-decoration: none;
+    color: white;
+    background-color: #FF6500;
+    padding: 2px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+#rodape a:hover {
+    background-color: aquamarine;
+    color: #FF6500;
+}
